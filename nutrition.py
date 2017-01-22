@@ -7,24 +7,35 @@ import time
 import unidecode
 import os
 
+current_carbs = 0.0
+current_protein = 0.0
+current_fat = 0.0
+rec_carb = 0.0
+rec_protein = 0.0
+rec_fat = 0.0
 
-#AFFIRMATIVE = ["yes", "yeah", "sure", "ok"]
 
-current_carbs = 0
-current_protein = 0
-current_fat = 0
-rec_carb = 0
-rec_protien = 0
-rec_fats = 0
+#  <---- incase we need to reinitialize JSON file
+person1 = {"current_carbs": current_carbs,
+         "current_fat": current_fat,
+         "current_protein": current_protein,
+         "rec_carb": rec_carb,
+         "rec_fat": rec_fat,
+         "rec_protein": rec_protein}
+with open('data.json', 'w') as fp:
+        json.dump(person1, fp)
+        
+        
+person1 = {}
+    
+with open('data.json', 'r') as fp:
+        person1 = json.load(fp)
+
+print(person1)
+
 
 app = Flask(__name__)
 ask = Ask(app, "/swoltrition")
-
-# added for testing purposes
-#def add(carbs, protein, fat):
- #   current_carbs = current_carbs + carbs
- #   current_protein = current_protein + protein
- #   current_fat = current_fat + fat
 
 @app.route('/')
 def homepage():
@@ -41,32 +52,40 @@ def start_skill():
 def no_intent():
     if 'NoIntent' in convert_errors:
         return question("Sorry, can you repeat that.")
-    bye_text = 'Why did you ask me then? You gotta eat big, or stay small!'
+    bye_text = 'Why did you ask me then? You gotta eat big, or stay small man!'
     return statement(bye_text)
 
 
-#def decide(choice):
- #   speech_text = "Would you like to know all meals?"
-  #  for x in AFFIRMATIVE:
-  #      if x == choice:
-   #         print("yes")
-   #         #ask for the meal
- #       else:
-    #        print("no")
-    #        #give complete meal history for that day
-
-
-#Gates Work on this vvvvvv
 # This will retrieve the food mentioned by the user from the USDA database, and then add its macros to the users macro totals
-#def get_foods():
-
-    #return food
 
 @ask.intent("RecordFoodIntent")
 def log(food):
     if 'RecordFoodIntent' in convert_errors:
         return question("Sorry, can you repeat that.")
-    speech_text = "{} has been recorded".format(food)
+    search_payload = {'format': 'json', 'q': food, 'ds': 'Standard Reference', 'max': '1', 'api_key': 'AY1U6UdBQKwgOcvSaQVhLqcu5QdHagIPWgAQvHtU'}
+    search_request = requests.get('http://api.nal.usda.gov/ndb/search/?', params = search_payload)
+    print (search_request.url)
+    searchresults = json.loads(search_request.text)
+    foodndbno = searchresults['list']['item'][0]["ndbno"]
+    nutrients_payload = {'ndbno': foodndbno, 'type': 'b', 'format': 'json', 'api_key': 'AY1U6UdBQKwgOcvSaQVhLqcu5QdHagIPWgAQvHtU'}
+    nutrients_request = requests.get('http://api.nal.usda.gov/ndb/reports/?', params = nutrients_payload)
+    print(nutrients_request.url)
+
+    food_data=json.loads(nutrients_request.text)
+    foodname = food_data['report']['food']["name"]
+    person1['food_name'].append(foodname)
+    protein_added = food_data['report']['food']['nutrients'][2]["value"]
+    fat_added = food_data['report']['food']['nutrients'][3]["value"]
+    carbs_added = food_data['report']['food']['nutrients'][4]["value"]
+    person1['current_protein'] = person1['current_protein'] + float(protein_added)
+    person1['current_fat'] = person1['current_fat'] + float(fat_added)
+    person1['current_carbs'] = person1['current_carbs'] + float(carbs_added)
+    
+    # save data
+    with open('data.json', 'w') as fp:
+        json.dump(person1, fp)
+    
+    speech_text = "{} has been recorded. {} g of protein added, {} g of fat added, {} g of carbs added".format(food, protein_added, fat_added, carbs_added)
     return statement(speech_text)
     #send to database
 
@@ -74,9 +93,11 @@ def log(food):
 @ask.intent("CurrentMacrosIntent")
 def report_macros():
     if 'CurrentMacrosIntent' in convert_errors:
-            return question("Sorry, can you repeat that.")
-    macros_text = "You have eaten %d g carbs, %d g protein, and %d g fat." % (current_carbs, current_protein, current_fat)
+        return question("Sorry, can you repeat that.")
+    macros_text = "You have eaten %d g of carbs, %d g of protein, and %d g of fat." % (person1['current_carbs'], person1['current_protein'], person1['current_fat'])
     return statement(macros_text)
+    #if we have time add in a feature where we calculate how many macros more they need, so just simple subtractio"
+
 
 
 app.run(host=os.getenv('IP', '0.0.0.0'), port=int(os.getenv('PORT', 8080)))

@@ -18,7 +18,7 @@
 
             "name": "foods",
 
-            "type": "AMAZON.Food"
+            "type": "literal"
         }
       ]
     }, {
@@ -35,12 +35,13 @@ CurrentMacrosIntent What are my macros for today
 CurrentMacrosIntent What is my macro total for today
 CurrentMacrosIntent Show me today's macro total
 
-RecordFoodIntent I want to log a food
-RecordFoodIntent Yes I want to log a food
-RecordFoodIntent Record a food
-RecordFoodIntent Log a food
+RecordFoodIntent I want to log {LIST_OF_FOODS}
+RecordFoodIntent Yes I want to log a {LIST_OF_FOODS}
+RecordFoodIntent Record a {LIST_OF_FOODS}
+RecordFoodIntent Log a {LIST_OF_FOODS}
 
 NoIntent no
 NoIntent go away
 NoIntent nope
 NoIntent nah
+NoIntent no thanks
