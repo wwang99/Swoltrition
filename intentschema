@@ -1,0 +1,46 @@
+{
+
+    "intents": [{
+
+      "intent": "CurrentMacrosIntent",
+      
+      "slots": [{
+       		
+            "name": "day",
+      		"type": "AMAZON.date"
+      }
+     ]
+    }, {
+
+        "intent": "RecordFoodIntent",
+
+        "slots": [{
+
+            "name": "foods",
+
+            "type": "AMAZON.Food"
+        }
+      ]
+    }, {
+        "intent": "NoIntent"
+           
+        }]
+}
+
+
+
+
+CurrentMacrosIntent Yes I want to see my macros
+CurrentMacrosIntent What are my macros for today
+CurrentMacrosIntent What is my macro total for today
+CurrentMacrosIntent Show me today's macro total
+
+RecordFoodIntent I want to log a food
+RecordFoodIntent Yes I want to log a food
+RecordFoodIntent Record a food
+RecordFoodIntent Log a food
+
+NoIntent no
+NoIntent go away
+NoIntent nope
+NoIntent nah
