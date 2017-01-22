@@ -10,21 +10,22 @@ import os
 current_carbs = 0.0
 current_protein = 0.0
 current_fat = 0.0
-rec_carb = 0.0
+rec_carbs = 0.0
 rec_protein = 0.0
 rec_fat = 0.0
 
-
+'''
 #  <---- incase we need to reinitialize JSON file
 person1 = {"current_carbs": current_carbs,
          "current_fat": current_fat,
          "current_protein": current_protein,
-         "rec_carb": rec_carb,
+         "rec_carbs": rec_carbs,
          "rec_fat": rec_fat,
          "rec_protein": rec_protein}
+         
 with open('data.json', 'w') as fp:
         json.dump(person1, fp)
-        
+'''        
         
 person1 = {}
     
@@ -44,7 +45,7 @@ def homepage():
 # What Alexa greets the user when prompted on a response regarding this application
 @ask.launch
 def start_skill():
-    welcome_message = 'Hello there, would do you want to see your current macros for the day, or log a food?'
+    welcome_message = 'Hello there, would you like to see your current macros for the day, log a food, or view recomended macros?'
     return question(welcome_message)
 
 # If the user says no
@@ -60,8 +61,8 @@ def no_intent():
 
 @ask.intent("RecordFoodIntent")
 def log(food):
-    if 'RecordFoodIntent' in convert_errors:
-        return question("Sorry, can you repeat that.")
+    #if 'RecordFoodIntent' in convert_errors:
+    #    return question("Sorry, can you repeat that.")
     search_payload = {'format': 'json', 'q': food, 'ds': 'Standard Reference', 'max': '1', 'api_key': 'AY1U6UdBQKwgOcvSaQVhLqcu5QdHagIPWgAQvHtU'}
     search_request = requests.get('http://api.nal.usda.gov/ndb/search/?', params = search_payload)
     print (search_request.url)
@@ -98,7 +99,21 @@ def report_macros():
     return statement(macros_text)
     #if we have time add in a feature where we calculate how many macros more they need, so just simple subtractio"
 
-
+#user wants to know goal macros
+@ask.intent("MacrosLeftIntent")
+def goal_macros():
+    carbs_defficit = person1["rec_carbs"] - person1["current_carbs"]
+    fat_defficit = person1["rec_fat"] - person1["current_fat"]
+    protein_defficit = person1["rec_protein"] - person1["current_protein"]
+    
+    if (carbs_defficit < 0 or fat_defficit < 0 or protein_defficit < 0):
+        advice_text = "You have exceeded %d grams of carbs, %d, grams of fats, and %d grams of proteins" % (-1*carbs_defficit, -1*fat_defficit, -1*protein_defficit)
+    elif (carbs_defficit == 0 or fat_defficit == 0 or protein_defficit == 0):
+        advice_text = "You have met all of your macro goals!"
+    else:
+        advice_text = "You need to eat  %d grams of carbs, %d, grams of fats, and %d grams of proteins to reach your goal" % (carbs_defficit, fat_defficit, protein_defficit)
+    
+    return statement(advice_text)
 
 app.run(host=os.getenv('IP', '0.0.0.0'), port=int(os.getenv('PORT', 8080)))
 
